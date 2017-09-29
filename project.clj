@@ -5,6 +5,7 @@
                  [cljsjs/d3 "4.3.0-5"]
                  [cljsjs/jquery "3.2.1-0"]
                  [cljsjs/semantic-ui "2.2.4-0"]
+                 [org.clojure/core.match "0.3.0-alpha5"]
                  ]
   :plugins [[lein-figwheel "0.5.4"]]
   :clean-targets [:target-path "out"]
