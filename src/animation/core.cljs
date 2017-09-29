@@ -11,21 +11,36 @@
                   :right
                   ["opera", "safari"]}))
 
-(defn root [state]
-  [:div.ui.two.column.grid.container
-   {:join #(.. % (style "padding-top" "2em"))}
+(declare main)
 
-   [:div.column>:div.ui.list
-    (for [item (:left state)]
-      [:i.huge.icon {:join #(.. % (classed item "true"))}])]
-   [:div.column>:div.ui.list
-    (for [item (:right state)]
-      [:i.huge.icon {:join #(.. % (classed item "true"))}])]])
+(defn root [state-ref]
+  (let [state @state-ref]
+    [:div.ui.two.column.grid.container
+     {:join #(.. % (style "padding-top" "2em"))}
+
+     [:div.column>:div.ui.list
+      (for [item (:left state)]
+        [:i.huge.icon {:join #(.. % (classed item "true"))
+                       :click (fn []
+                                (swap! state-ref update :right #(conj % item))
+                                (swap! state-ref update :left #(remove #{item} %))
+                                (main)
+                                )
+                       }])]
+     [:div.column>:div.ui.list
+      (for [item (:right state)]
+        [:i.huge.icon {:join #(.. % (classed item "true"))
+                       :click (fn []
+                                (swap! state-ref update :left #(conj % item))
+                                (swap! state-ref update :right #(remove #{item} %))
+                                (main)
+                                )
+                       }])]]))
 
 (defn main []
   (println "***")
   (r/render
    (.. js/d3 (select "#app"))
-   (root @state)))
+   (root state)))
 
 (main)
