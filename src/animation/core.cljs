@@ -6,10 +6,10 @@
 
 (enable-console-print!)
 
-(def state (atom {:left
-                  ["chrome", "firefox", "edge"]
+(def data-state (atom {:left
+                  #{ "chrome", "firefox", "edge" }
                   :right
-                  ["opera", "safari"]}))
+                  #{ "opera", "safari" }}))
 
 (declare main)
 
@@ -27,40 +27,40 @@
       (style "opacity" 0)
       remove))
 
-(defn swap-left-right [state-ref item]
-  (swap! state-ref update :right #(conj % item))
-  (swap! state-ref update :left #(remove #{item} %))
+(defn swap-left-right [data-state-ref item]
+  (swap! data-state-ref update :right #(conj % item))
+  (swap! data-state-ref update :left #(remove #{item} %))
   (main))
 
-(defn swap-right-left [state-ref item]
-  (swap! state-ref update :left #(conj % item))
-  (swap! state-ref update :right #(remove #{item} %))
+(defn swap-right-left [data-state-ref item]
+  (swap! data-state-ref update :left #(set (conj % item)))
+  (swap! data-state-ref update :right #(set (remove #{item} %)))
   (main))
 
-(defn root [state-ref]
-  (let [state @state-ref]
+(defn root [data-state-ref]
+  (let [data-state @data-state-ref]
     [:div.ui.two.column.grid.containeR
      {:join #(.. % (style "padding-top" "2em"))}
 
      [:div.column>:div.ui.list
-      (for [item (:left state)]
+      (for [item (:left data-state)]
         [:i.huge.icon {:id item
                        :join #(.. % (classed item "true"))
                        :enter fade-in
                        :exit fade-out
-                       :click #(swap-left-right state-ref  item)}])]
+                       :click #(swap-left-right data-state-ref  item)}])]
      [:div.column>:div.ui.list
-      (for [item (:right state)]
+      (for [item (:right data-state)]
         [:i.huge.icon {:id item
                        :join #(.. % (classed item "true"))
                        :enter fade-in
                        :exit fade-out
-                       :click #(swap-right-left state-ref item)}])]]))
+                       :click #(swap-right-left data-state-ref item)}])]]))
 
 (defn main []
   (println "***")
   (r/render
    (.. js/d3 (select "#app"))
-   (root state)))
+   (root data-state)))
 
 (main)
