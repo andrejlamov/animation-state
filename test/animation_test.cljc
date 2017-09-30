@@ -4,10 +4,10 @@
 
 (t/deftest scratch
   (let [state-hook-did-run (atom false)
-        state-hook (fn [atom-ref new-state]
-                     (when (all-finished? new-state)
-                       (reset! state-hook-did-run true)))
-        state (state state-hook)
+        state (atom {})
+        _ (add-watch state :watcher (fn [atom key old-state new-state]
+                                      (when (all-finished? new-state)
+                                        (reset! state-hook-did-run true))))
         screen (atom "")
         ani0 (fn [selection end]
                (swap! screen str "ani0")
@@ -26,8 +26,17 @@
                      ["test animation" :exit  "chrome"]]
               ani2)
 
+
     (resolve state)
     (t/is ((comp not all-finished?) @state))
     (play state)
     (t/is (= "ani0ani2" @screen))
-    (t/is @state-hook-did-run)))
+    (t/is @state-hook-did-run)
+
+
+    (t/is (not (all-finished0? {})))
+    (t/is (not (all-finished0? [])))
+    (t/is (not (all-finished0? [{:finished true} {:finished false}])))
+    (t/is (all-finished0? [{:finished true} {:finished true}]))
+
+    ))

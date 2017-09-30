@@ -1,25 +1,17 @@
 (ns animation.core
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require
    [cljsjs.d3]
    [cljsjs.semantic-ui]
+   [cljs.core.async :refer [put! chan <! >! sliding-buffer]]
    [animation.animation :as a]
    [animation.render :as r]))
 
 (enable-console-print!)
 
 ;; state
-(def data-state-atom (atom {:left
-                            #{"chrome", "firefox", "edge"}
-                            :right
-                            #{"opera", "safari"}}))
-
-(def anim-state (a/state (fn [atom new-state]
-                           (when (and (not (empty? new-state))
-                                      (a/all-finished? new-state))
-                             (reset! atom {})
-                             (println "animation end")
-                             )
-                           )))
+(def data-state-atom (atom {}))
+(def anim-state-atom (atom {}))
 
 ;; animations
 (defn fade-in [selection end]
@@ -58,38 +50,58 @@
       (for [item (:left data-state)]
         [:i.huge.icon {:id item
                        :join #(.. % (classed item "true"))
-                       :enter #(a/add anim-state ["left enter" item] % fade-in)
-                       :exit #(a/add anim-state ["left exit" item] % fade-out)
+                       :enter #(a/add anim-state-atom ["left enter" item] % fade-in)
+                       :exit #(a/add anim-state-atom ["left exit" item] % fade-out)
                        :click #(swap-left-right data-state-atom item)}])]
      [:div.column>:div.ui.list
       (for [item (:right data-state)]
         [:i.huge.icon {:id item
                        :join #(.. % (classed item "true"))
-                       :enter #(a/add anim-state ["right enter" item] % fade-in)
-                       :exit #(a/add anim-state ["right exit" item] % fade-out)
+                       :enter #(a/add anim-state-atom ["right enter" item] % fade-in)
+                       :exit #(a/add anim-state-atom ["right exit" item] % fade-out)
                        :click #(swap-right-left data-state-atom item)}])]]))
 
 ;; render
-(defn render [data-state-atom]
-  (reset! anim-state {})
+(def new-data-ch (chan (sliding-buffer 1)))
+(def anim-finished-ch (chan (sliding-buffer 1)))
 
+(defn render [data-state-atom]
+  (reset! anim-state-atom {})
   (r/render
    (.. js/d3 (select "#app"))
    (root data-state-atom))
 
-  (a/resolve anim-state)
-  (a/play anim-state)
-  )
+  (a/resolve anim-state-atom)
+  (if (empty? @anim-state-atom)
+    (put! anim-finished-ch true)
+    (a/play anim-state-atom)))
+
+(add-watch anim-state-atom :animation (fn [key atom old-state new-state]
+                                        (when (a/all-finished? new-state)
+                                          (println "push animation end")
+                                          (put! anim-finished-ch true))))
 
 (add-watch data-state-atom :render
-           (fn [key atom _old-state _new-state]
-             (render atom)))
+           (fn [key atom old-state new-state]
+             (println "push new data")
+             (if (not= old-state new-state)
+               (put! new-data-ch atom))))
 
-(defn main []
-  (println "***")
-  (render data-state-atom))
+(reset! data-state-atom {:left
+                         #{"chrome", "firefox", "edge"}
+                         :right
+                         #{"opera", "safari"}})
 
-(main)
+(defn render-loop []
+  (render data-state-atom)
+  (go-loop []
+    (println "*** blocking")
+    (when-let [data-state-atom (<! new-data-ch)]
+      (println "pop new data")
+      (render data-state-atom)
+      (<! anim-finished-ch)
+      (println "pop animation end")
+      (recur))))
 
-;; state operations
+(render-loop)
 

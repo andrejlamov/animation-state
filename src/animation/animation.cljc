@@ -1,12 +1,5 @@
 (ns animation.animation)
 
-(defn state [on-finished]
-  (let [state-ref (atom {})]
-    (add-watch state-ref :finished
-               (fn [key atom old-state new-state]
-                 (on-finished atom new-state)))
-    state-ref))
-
 (defn add [state-ref path selection fn]
   (swap! state-ref assoc-in [:update path] {:selection selection
                                             :fn fn
@@ -29,8 +22,13 @@
   (concat (map (fn [[k v]] v) (:update state))
           (map (fn [[k v]] v) (:override state))))
 
+(defn all-finished0? [state]
+  (if (empty? state)
+    false
+    (every? (comp true? :finished) state)))
+
 (defn all-finished? [state]
-  (every? (comp true? :finished) (flat-state state)))
+  (all-finished0? (flat-state state)))
 
 (defn finished [state-ref path]
   (swap! state-ref assoc-in path true)
