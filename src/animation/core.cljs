@@ -87,10 +87,12 @@
              (if (not= old-state new-state)
                (put! new-data-ch atom))))
 
-(reset! data-state-atom {:left
-                         #{"chrome", "firefox", "edge"}
-                         :right
-                         #{"opera", "safari"}})
+(defn restate [left right]
+  (reset! data-state-atom {:left
+                           (set left);#{"chrome", "edge"}
+                           :right
+                           (set right);#{"opera", "firefox", "safari"}
+                           }))
 
 (defn render-loop []
   (render data-state-atom)
@@ -103,5 +105,30 @@
       (println "pop animation end")
       (recur))))
 
-(render-loop)
+(defonce single-loop
+  (render-loop))
+
+;; test
+(restate ["chrome"] ["firefox"])
+(restate ["chrome" "safari"] ["firefox" "edge"])
+(restate ["chrome" "edge" "safari"] ["firefox" "opera"])
+(restate ["chrome"] ["firefox"])
+(restate ["chrome" "safari"] ["firefox" "edge"])
+(restate ["chrome"] ["firefox"])
+(restate ["chrome" "safari"] ["firefox" "edge"])
+(restate ["chrome" "edge" "safari"] ["firefox" "opera"])
+(restate ["chrome"] ["firefox"])
+(restate ["chrome" "safari"] ["edge"])
+(restate ["chrome" "edge" "safari"] ["firefox" "opera"])
+(restate ["chrome"] ["firefox"])
+(restate ["chrome" "safari"] ["firefox" ])
+(restate ["chrome" "edge" "safari"] ["firefox" "opera"])
+(restate ["chrome"] ["firefox"])
+(restate ["chrome" "safari"] ["firefox" ])
+(restate ["chrome"] ["firefox"])
+(restate ["chrome" "safari"] ["firefox" "edge"])
+(restate ["chrome" "edge" "safari"] ["firefox" "opera"])
+(restate ["chrome"] ["firefox"])
+(restate ["chrome" "firefox"] ["edge" "safari" "opera"])
+
 
