@@ -33,12 +33,19 @@
 
 ;; state operations
 (defn swap-left-right [data-state-atom item]
-  (swap! data-state-atom update :right #(set (conj % item)))
-  (swap! data-state-atom update :left #(set (remove #{item} %))))
+  (swap! data-state-atom (fn [state]
+                           (-> state
+                               (update :right #(set (conj % item)))
+                               (update :left #(set (remove #{item} %)))
+                               )))
+  )
 
 (defn swap-right-left [data-state-atom item]
-  (swap! data-state-atom update :left #(set (conj % item)))
-  (swap! data-state-atom update :right #(set (remove #{item} %))))
+  (swap! data-state-atom (fn [state]
+                           (-> state
+                               (update :left #(set (conj % item)))
+                               (update :right #(set (remove #{item} %)))
+                               ))))
 
 ;; template
 (defn root [data-state-atom]
