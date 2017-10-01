@@ -27,11 +27,9 @@
         [t0 l0] (pos exit-icon)
         [t1 l1] (pos enter-icon)
         t       (- (- t1 t0))
-        l       (- (- l1 l0))
-        ]
+        l       (- (- l1 l0))]
     (.. exit-icon
-        (style "opacity" 0)
-        )
+        (style "opacity" 0))
     (.. enter-icon
         (style "z-index" "2")
         (style "color" "green")
@@ -42,11 +40,7 @@
         (on "end" (fn []
                     (.. exit-icon remove)
                     (println "sent end")
-                    (end)
-                    ))
-        )
-    )
-  )
+                    (end))))))
 
 (defn fade-in [selection end]
   (.. selection
@@ -74,16 +68,13 @@
   (swap! data-state-atom (fn [state]
                            (-> state
                                (update :right #(set (conj % item)))
-                               (update :left #(set (remove #{item} %)))
-                               )))
-  )
+                               (update :left #(set (remove #{item} %)))))))
 
 (defn swap-right-left [data-state-atom item]
   (swap! data-state-atom (fn [state]
                            (-> state
                                (update :left #(set (conj % item)))
-                               (update :right #(set (remove #{item} %)))
-                               ))))
+                               (update :right #(set (remove #{item} %)))))))
 
 ;; template
 (defn root [data-state-atom]
@@ -99,9 +90,7 @@
                        :enter (fn [sel]
                                 (a/add      anim-state-atom ["left enter" item] sel fade-in)
                                 (a/override anim-state-atom [["left enter" item]
-                                                             ["right exit" item]
-                                                             ] (partial icon-fly item))
-                                )
+                                                             ["right exit" item]] (partial icon-fly item)))
                        :exit #(a/add anim-state-atom ["left exit" item] % fade-out)
                        :click #(swap-left-right data-state-atom item)}])]
      [:div.column>:div.ui.list
