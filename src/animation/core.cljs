@@ -20,13 +20,18 @@
         exit-icon (get selections ["right exit" item])
         ]
     (.. exit-icon
+        (style "color" "black")
+        transition
+        (duration 2000)
         (style "color" "red")
+        (remove)
+        (on "end" #(end))
         )
     (.. enter-icon
         (style "color" "green")
         )
     )
-  (end))
+  )
 
 (defn fade-in [selection end]
   (.. selection
