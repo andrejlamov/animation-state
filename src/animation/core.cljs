@@ -3,6 +3,7 @@
   (:require
    [cljsjs.d3]
    [cljsjs.semantic-ui]
+   [cljsjs.jquery]
    [cljs.core.async :refer [put! chan <! >! sliding-buffer]]
    [animation.animation :as a]
    [animation.render :as r]))
@@ -14,21 +15,35 @@
 (def anim-state-atom (atom {}))
 
 ;; animations
+(defn pos [e]
+  (let [n (.. e node)
+        o (.. (js/$ n) offset)]
+    [(.-top o)  (.-left o)]))
+
 (defn icon-fly [item selections end]
   (println "fly selections" selections)
   (let [enter-icon (get selections ["left enter" item])
         exit-icon (get selections ["right exit" item])
+        [t0 l0] (pos exit-icon)
+        [t1 l1] (pos enter-icon)
+        t       (- (- t1 t0))
+        l       (- (- l1 l0))
         ]
     (.. exit-icon
-        (style "color" "black")
-        transition
-        (duration 2000)
-        (style "color" "red")
-        (remove)
-        (on "end" #(end))
+        (style "opacity" 0)
         )
     (.. enter-icon
+        (style "z-index" "2")
         (style "color" "green")
+        (style "transform" (str "translate(" l "px," t "px)"))
+        (transition)
+        (duration 2000)
+        (style "transform" "translate(0px,0px)")
+        (on "end" (fn []
+                    (.. exit-icon remove)
+                    (println "sent end")
+                    (end)
+                    ))
         )
     )
   )
@@ -79,7 +94,8 @@
      [:div.column>:div.ui.list
       (for [item (:left data-state)]
         [:i.huge.icon {:id item
-                       :join #(.. % (classed item "true"))
+                       :join #(.. % (classed item "true")
+                                  (style "z-index" "-1"))
                        :enter (fn [sel]
                                 (a/add      anim-state-atom ["left enter" item] sel fade-in)
                                 (a/override anim-state-atom [["left enter" item]
@@ -91,7 +107,8 @@
      [:div.column>:div.ui.list
       (for [item (:right data-state)]
         [:i.huge.icon {:id item
-                       :join #(.. % (classed item "true"))
+                       :join #(.. % (classed item "true")
+                                  (style "z-index" "-1"))
                        :enter #(a/add anim-state-atom ["right enter" item] % fade-in)
                        :exit #(a/add anim-state-atom ["right exit" item] % fade-out)
                        :click #(swap-right-left data-state-atom item)}])]]))
