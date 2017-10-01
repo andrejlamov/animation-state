@@ -14,6 +14,20 @@
 (def anim-state-atom (atom {}))
 
 ;; animations
+(defn icon-fly [item selections end]
+  (println "fly selections" selections)
+  (let [enter-icon (get selections ["left enter" item])
+        exit-icon (get selections ["right exit" item])
+        ]
+    (.. exit-icon
+        (style "color" "red")
+        )
+    (.. enter-icon
+        (style "color" "green")
+        )
+    )
+  (end))
+
 (defn fade-in [selection end]
   (.. selection
       (style "opacity" 0)
@@ -26,8 +40,12 @@
   (.. selection
       transition
       (style "opacity" 1)
-      (duration 2000)
+      (duration 250)
       (style "opacity" 0)
+      transition
+      (duration 2000)
+      (style "transform" "scaleX(0)")
+      (style "width" "0")
       remove
       (on "end" #(end))))
 
@@ -57,7 +75,12 @@
       (for [item (:left data-state)]
         [:i.huge.icon {:id item
                        :join #(.. % (classed item "true"))
-                       :enter #(a/add anim-state-atom ["left enter" item] % fade-in)
+                       :enter (fn [sel]
+                                (a/add      anim-state-atom ["left enter" item] sel fade-in)
+                                (a/override anim-state-atom [["left enter" item]
+                                                             ["right exit" item]
+                                                             ] (partial icon-fly item))
+                                )
                        :exit #(a/add anim-state-atom ["left exit" item] % fade-out)
                        :click #(swap-left-right data-state-atom item)}])]
      [:div.column>:div.ui.list
@@ -98,14 +121,15 @@
   (reset! data-state-atom {:left
                            (set left);#{"chrome", "edge"}
                            :right
-                           (set right);#{"opera", "firefox", "safari"}
-                           }))
+                           (set right)}));#{"opera", "firefox", "safari"}
+
 
 (defn render-loop []
   (render data-state-atom)
   (go-loop []
     (println "*** blocking")
-    (when-let [data-state-atom (<! new-data-ch)]
+    (when-let
+        [data-state-atom (<! new-data-ch)]
       (println "pop new data")
       (render data-state-atom)
       (<! anim-finished-ch)
@@ -128,14 +152,13 @@
 (restate ["chrome" "safari"] ["edge"])
 (restate ["chrome" "edge" "safari"] ["firefox" "opera"])
 (restate ["chrome"] ["firefox"])
-(restate ["chrome" "safari"] ["firefox" ])
+(restate ["chrome" "safari"] ["firefox"])
 (restate ["chrome" "edge" "safari"] ["firefox" "opera"])
 (restate ["chrome"] ["firefox"])
-(restate ["chrome" "safari"] ["firefox" ])
+(restate ["chrome" "safari"] ["firefox"])
 (restate ["chrome"] ["firefox"])
 (restate ["chrome" "safari"] ["firefox" "edge"])
 (restate ["chrome" "edge" "safari"] ["firefox" "opera"])
 (restate ["chrome"] ["firefox"])
 (restate ["chrome" "firefox"] ["edge" "safari" "opera"])
-
 

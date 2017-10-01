@@ -11,12 +11,20 @@
 
 (defn resolve [state-ref]
   (doseq [[paths animation] (:override @state-ref)]
-    (doseq [path paths]
-      (let [update (get (:update @state-ref) path)
-            selection (:selection update)]
-        (when update
-          (swap! state-ref assoc-in [:override paths :selection path] selection)
-          (swap! state-ref update-in [:update] dissoc path))))))
+    (do
+      (if (every? #(not (nil? (get (:update @state-ref) %))) paths)
+        (do
+          (println paths)
+          (doseq [path paths]
+            (let [update (get (:update @state-ref) path)
+                  selection (:selection update)]
+              (when update
+                (swap! state-ref assoc-in [:override paths :selection path] selection)
+                (swap! state-ref update-in [:update] dissoc path)))))
+        (doseq [path paths]
+          (swap! state-ref update-in [:override] dissoc paths)
+          )
+        ))))
 
 (defn flat-state [state]
   (concat (map (fn [[k v]] v) (:update state))
