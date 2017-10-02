@@ -45,9 +45,9 @@
                         (style "transform" "scaleX(0)")
                         (style "width" "0")
                         remove
-                        (on "end"
-                            (println "sent end")
-                            (end)))
+                        (on "end" (fn []
+                                    (println "sent end")
+                                    (end))))
                     )))))
 
 (defn fade-in [selection end]
