@@ -8,7 +8,9 @@
                  [org.clojure/core.match "0.3.0-alpha5"]
                  [org.clojure/core.async "0.3.443"]
                  ]
-  :plugins [[lein-figwheel "0.5.4"]]
+  :plugins [[lein-figwheel "0.5.4"]
+            [lein-cljsbuild "1.1.7"]
+            ]
   :clean-targets [:target-path "out"]
   :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.2"]
                                   [org.clojure/tools.nrepl "0.2.13"]
@@ -21,6 +23,7 @@
                                    :on-jsload "animation.core/main"}
                         :compiler {:main "animation.core"
                                    :asset-path "js/out"
+                                   :optimizations :advanced
                                    :output-to "resources/public/js/main.js"
                                    :output-dir "resources/public/js/out"}}]}
 
