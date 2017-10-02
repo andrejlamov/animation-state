@@ -38,9 +38,17 @@
         (duration 2000)
         (style "transform" "translate(0px,0px)")
         (on "end" (fn []
-                    (.. exit-icon remove)
-                    (println "sent end")
-                    (end))))))
+                    (.. exit-icon
+                        (style "opacity" 0)
+                        transition
+                        (duration 2000)
+                        (style "transform" "scaleX(0)")
+                        (style "width" "0")
+                        remove
+                        (on "end"
+                            (println "sent end")
+                            (end)))
+                    )))))
 
 (defn fade-in [selection end]
   (.. selection
