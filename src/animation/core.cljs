@@ -113,8 +113,8 @@
    (root data-state-atom))
 
   (a/resolve anim-state-atom)
-  (cond (nil? @anim-state-atom) _
-        (empty? @anim-state-atom) (do (println "push animatoin end on empy")
+  (cond (nil? @anim-state-atom) (println "animation nil")
+        (empty? @anim-state-atom) (do (println "push animatoin end on empty")
                                       (put! anim-finished-ch true))
         :default (a/play anim-state-atom)))
 
@@ -126,8 +126,10 @@
 
 (add-watch data-state-atom :render
            (fn [key atom old-state new-state]
-             (println "push new data")
-             (put! new-data-ch atom)))
+             (if (not= old-state new-state)
+               (do
+                 (println "push new data")
+                 (put! new-data-ch atom)))))
 
 (defn restate [left right]
   (reset! data-state-atom {:left
@@ -158,6 +160,8 @@
 (restate ["chrome"] ["firefox"])
 (restate ["chrome" "safari"] ["firefox" "edge"])
 (restate ["chrome"] ["firefox"])
+(restate ["chrome" "safari"] ["firefox" "edge"])
+(restate ["chrome" "safari"] ["firefox" "edge"])
 (restate ["chrome" "safari"] ["firefox" "edge"])
 (restate ["chrome" "edge" "safari"] ["firefox" "opera"])
 (restate ["chrome"] ["firefox"])
