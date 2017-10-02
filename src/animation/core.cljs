@@ -107,26 +107,27 @@
 (def anim-finished-ch (chan (sliding-buffer 1)))
 
 (defn render [data-state-atom]
-  (reset! anim-state-atom {})
+  (reset! anim-state-atom nil)
   (r/render
    (.. js/d3 (select "#app"))
    (root data-state-atom))
 
   (a/resolve anim-state-atom)
-  (if (empty? @anim-state-atom)
-    (put! anim-finished-ch true)
-    (a/play anim-state-atom)))
+  (cond (nil? @anim-state-atom) _
+        (empty? @anim-state-atom) (do (println "push animatoin end on empy")
+                                      (put! anim-finished-ch true))
+        :default (a/play anim-state-atom)))
 
 (add-watch anim-state-atom :animation (fn [key atom old-state new-state]
-                                        (when (a/all-finished? new-state)
-                                          (println "push animation end")
+                                        (when (and (not (nil? new-state))
+                                                   (a/all-finished? new-state))
+                                          (println "push animation end in add-watch")
                                           (put! anim-finished-ch true))))
 
 (add-watch data-state-atom :render
            (fn [key atom old-state new-state]
              (println "push new data")
-             (if (not= old-state new-state)
-               (put! new-data-ch atom))))
+             (put! new-data-ch atom)))
 
 (defn restate [left right]
   (reset! data-state-atom {:left
