@@ -95,13 +95,17 @@
                     (render0 self children))))))
     (.. joined
         (each (fn [d]
-                (let [[tag {:keys [join click]} children] (js->clj d :keywordize-keys true)
-                      draw  (or join identity)]
-                  (this-as this
-                    (->> (.. js/d3 (select this)
-                             (on "click" click))
-                         (draw)
-                         (#(render0 %1 children))))))))))
+                (this-as this
+                  (let [[tag {:keys [join click hook]} children] (js->clj d :keywordize-keys true)
+                        draw (or join identity)
+                        hook (or hook identity)
+                        sel (.. js/d3 (select this)
+                                (on "click" click))
+                        ]
+                    (join sel)
+                    (hook sel)
+                    (render0 sel children)
+                    )))))))
 
 (defn render [parent children]
   (render0 parent [(transform children)]))

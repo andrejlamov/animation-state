@@ -20,10 +20,10 @@
         o (.. (js/$ n) offset)]
     [(.-top o)  (.-left o)]))
 
-(defn icon-fly [item selections end]
+(defn icon-fly [enter-key exit-key selections end]
   (println "fly selections" selections)
-  (let [enter-icon (get selections ["left enter" item])
-        exit-icon (get selections ["right exit" item])
+  (let [enter-icon (get selections enter-key)
+        exit-icon (get selections exit-key)
         [t0 l0] (pos exit-icon)
         [t1 l1] (pos enter-icon)
         t       (- (- t1 t0))
@@ -35,13 +35,13 @@
         (style "color" "green")
         (style "transform" (str "translate(" l "px," t "px)"))
         (transition)
-        (duration 2000)
+        (duration 500)
         (style "transform" "translate(0px,0px)")
         (on "end" (fn []
                     (.. exit-icon
                         (style "opacity" 0)
                         transition
-                        (duration 2000)
+                        (duration 500)
                         (style "transform" "scaleX(0)")
                         (style "width" "0")
                         remove
@@ -54,7 +54,7 @@
   (.. selection
       (style "opacity" 0)
       transition
-      (duration 2000)
+      (duration 500)
       (style "opacity" 1)
       (on "end" #(end))))
 
@@ -62,10 +62,10 @@
   (.. selection
       transition
       (style "opacity" 1)
-      (duration 250)
+      (duration 500)
       (style "opacity" 0)
       transition
-      (duration 2000)
+      (duration 500)
       (style "transform" "scaleX(0)")
       (style "width" "0")
       remove
@@ -94,11 +94,13 @@
       (for [item (:left data-state)]
         [:i.huge.icon {:id item
                        :join #(.. % (classed item "true")
-                                  (style "z-index" "-1"))
+                                  (style "z-index" "1"))
                        :enter (fn [sel]
                                 (a/add      anim-state-atom ["left enter" item] sel fade-in)
                                 (a/override anim-state-atom [["left enter" item]
-                                                             ["right exit" item]] (partial icon-fly item)))
+                                                             ["right exit" item]]
+                                            (partial icon-fly ["left enter" item]
+                                               ["right exit" item])))
                        :exit #(a/add anim-state-atom ["left exit" item] % fade-out)
                        :click #(swap-left-right data-state-atom item)}])]
      [:div.column>:div.ui.list
@@ -106,7 +108,12 @@
         [:i.huge.icon {:id item
                        :join #(.. % (classed item "true")
                                   (style "z-index" "-1"))
-                       :enter #(a/add anim-state-atom ["right enter" item] % fade-in)
+                       :enter (fn [sel]
+                                (a/add anim-state-atom ["right enter" item] sel fade-in)
+                                (a/override anim-state-atom [["right enter" item]
+                                                             ["left exit" item]]
+                                            (partial icon-fly ["right enter" item]
+                                                      ["left exit" item])))
                        :exit #(a/add anim-state-atom ["right exit" item] % fade-out)
                        :click #(swap-right-left data-state-atom item)}])]]))
 
